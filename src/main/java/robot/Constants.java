@@ -20,13 +20,41 @@ public final class Constants {
 
     // ***************************** SwerveModule Constants **********************************
     public static final class SwerveModuleConstants {
-        public static final double kWheelDiameterMeters = Units.inchesToMeters(4);
+        
+        // Drive Wheel Constant
+        public static final double kWheelDiameterMeters = Units.inchesToMeters(4);      // 4 Inch wheel
+
+        // Drive Motor/Encoder Constants    
+
+        // ****************************************************************
+        //
+        //      4096 Motor Encoder Counts per MOTOR revolution
+        //    * 6.75 gear ratio - Motor revolutions to 1 wheel revolution
+        //  --------
+        //  = 27,648 Motor Encoder Counts Per WHEEL Revolution
+        // 
+        //      4.00  Inches Wheel Diameter
+        //     12.56 Inches Wheel Circumfrence
+        //      0.319024 Meters Wheel Circumfrence
+        //   / 27648 Divide by Motor Encoder Counts Per Wheel Rotation
+        //  --------
+        //   = 0.0000115387731 Meters Traveled Per Motor Encoder Count
+        //
+        // ****************************************************************
         public static final double kDriveMotorGearRatio = 1 / 6.75;
+        public static final double kDriveEncoderCountsPerRev = 4096;
+        public static final double kDriveEncoderDistancePerUnitMeters = 0.0000115387731;
+
+        public static final double kDriveEncoderRot2Meter = kDriveMotorGearRatio * Math.PI * kWheelDiameterMeters; // ???
+        public static final double kDriveEncoderRPM2MeterPerSec = kDriveEncoderRot2Meter / 60;                     // ??
+
+        // Turning Motor Constants
         public static final double kTurningMotorGearRatio = 1 / 21.428;     // Spec Sheet 150/7 : 1
-        public static final double kDriveEncoderRot2Meter = kDriveMotorGearRatio * Math.PI * kWheelDiameterMeters;
-        public static final double kTurningEncoderRot2Rad = kTurningMotorGearRatio * 2 * Math.PI;
-        public static final double kDriveEncoderRPM2MeterPerSec = kDriveEncoderRot2Meter / 60;
-        public static final double kTurningEncoderRPM2RadPerSec = kTurningEncoderRot2Rad / 60;
+        public static final double kTurningMotorEncoderCountsPerRev = 4096;
+        public static final double kTurningEncoderRot2Rad = kTurningMotorGearRatio * 2 * Math.PI;   // ?????????????
+        public static final double kTurningEncoderRPM2RadPerSec = kTurningEncoderRot2Rad / 60;  // ?????????????
+
+        // PID Constant
         public static final double kPTurning = 0.5;
     }
 
