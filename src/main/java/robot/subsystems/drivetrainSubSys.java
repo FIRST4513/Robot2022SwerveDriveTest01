@@ -115,10 +115,12 @@ public class drivetrainSubSys extends SubsystemBase {
     }
 
     public double getHeading() {
+        // This will return values from -180 to +180 degrees of yaw
         return Math.IEEEremainder(gyro.getAngle(), 360);
     }
 
     public Rotation2d getRotation2d() {
+        // this will return a Rotation2d object of the yaw value -180 to +180 degree
         return Rotation2d.fromDegrees(getHeading());
     }
 

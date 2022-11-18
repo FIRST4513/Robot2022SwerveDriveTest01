@@ -22,11 +22,12 @@ public final class Constants {
     public static final class SwerveModuleConstants {
         
         // Drive Wheel Constant
-        public static final double kWheelDiameterMeters = Units.inchesToMeters(4);      // 4 Inch wheel
-
-        // Drive Motor/Encoder Constants    
-
-        // ****************************************************************
+        public static final double kWheelDiameterInches = 4.0;        
+        public static final double kWheelDiameterMeters = Units.inchesToMeters(kWheelDiameterInches);
+        public static final double kWheelCircInches = 12.56;         
+        public static final double kWheelCircMeters = 0.319024; 
+        // 
+        // ------------------------  Drive Motor/Encoder Constants  ----------------------
         //
         //      4096 Motor Encoder Counts per MOTOR revolution
         //    * 6.75 gear ratio - Motor revolutions to 1 wheel revolution
@@ -40,6 +41,11 @@ public final class Constants {
         //  --------
         //   = 0.0000115387731 Meters Traveled Per Motor Encoder Count
         //
+        //
+        // Note: inch * 0.0254 = meters.
+        // Note: Meter * 39.3701 = Inches
+        // Note: radians per Encoder Count (1 degree = pi/180 = 0.01745)
+        //
         // ****************************************************************
         public static final double kDriveMotorGearRatio = 1 / 6.75;
         public static final double kDriveEncoderCountsPerRev = 4096;
@@ -48,19 +54,38 @@ public final class Constants {
         public static final double kDriveEncoderRot2Meter = kDriveMotorGearRatio * Math.PI * kWheelDiameterMeters; // ???
         public static final double kDriveEncoderRPM2MeterPerSec = kDriveEncoderRot2Meter / 60;                     // ??
 
-        // Turning Motor Constants
+        //
+        // ------------------------  Turning Motor/Encoder Constants  ----------------------
+        // This motors Encoder is only useful for wheel turning VELOCITY. Not for POSITION!
+        //
+        //        4096 Motor Encoder Counts per MOTOR revolution
+        //    * 21.428 gear ratio - Motor revolutions to 1 wheel rotation through 360 degrees (150/7 : 1)
+        //  ==========
+        //  =   87,769  Motor Encoder Counts Per WHEEL Rotation through 360 degrees
+        //
+        //        360 degrees 
+        //   / 87,769 Divide by Motor Encoder Counts Per WHEEL Rotation
+        //  =========
+        //  = 0.00410167 degrees per Encoder Count
+        //                  radians per Encoder Count (1 degree = pi/180 = 0.01745)
+        // 
+        // ****************************************************************
         public static final double kTurningMotorGearRatio = 1 / 21.428;     // Spec Sheet 150/7 : 1
         public static final double kTurningMotorEncoderCountsPerRev = 4096;
+        public static final double kTurningEncoderDegreesPerEncoderCount = 0.00410167;
+        public static final double kTurningEncoderRadiansPerEncoderCount = Math.toRadians(kTurningEncoderDegreesPerEncoderCount);
+
         public static final double kTurningEncoderRot2Rad = kTurningMotorGearRatio * 2 * Math.PI;   // ?????????????
         public static final double kTurningEncoderRPM2RadPerSec = kTurningEncoderRot2Rad / 60;  // ?????????????
 
-        // PID Constant
+        // ------------------------  PID Constant  ------------------------------
         public static final double kPTurning = 0.5;
     }
 
     // ***************************** DriveTrain Constants **********************************
     public static final class DriveTrainConstants {
 
+        // Drivetrain Kinematics
         public static final double kTrackWidth = Units.inchesToMeters(23.75); // Between right and left wheels
         public static final double kWheelBase = Units.inchesToMeters(23.75);  // Between front and back wheels
 
@@ -70,71 +95,79 @@ public final class Constants {
                 new Translation2d(-kWheelBase / 2, -kTrackWidth / 2),
                 new Translation2d(-kWheelBase / 2, kTrackWidth / 2));
 
-        public static final int kFrontLeftDriveMotorPort = 8;
-        public static final int kBackLeftDriveMotorPort = 2;
-        public static final int kFrontRightDriveMotorPort = 6;
-        public static final int kBackRightDriveMotorPort = 4;
+        // Front Left Swerve Drive Configs (CAN ID's and various flags and offsets)
+        public static final int     kFrontLeftDriveMotorPort = 1;
+        public static final boolean kFrontLeftDriveEncoderReversed = true;
 
-        public static final int kFrontLeftTurningMotorPort = 7;
-        public static final int kBackLeftTurningMotorPort = 1;
-        public static final int kFrontRightTurningMotorPort = 5;
-        public static final int kBackRightTurningMotorPort = 3;
-
+        public static final int     kFrontLeftTurningMotorPort = 2;
         public static final boolean kFrontLeftTurningEncoderReversed = true;
-        public static final boolean kBackLeftTurningEncoderReversed = true;
+
+        public static final int     kFrontLeftDriveAbsoluteEncoderPort = 3;
+        public static final double  kFrontLeftDriveAbsoluteEncoderOffsetRad = -0.254;
+        public static final boolean kFrontLeftDriveAbsoluteEncoderReversed = false;
+
+        // Front Right Swerve Drive
+        public static final int     kFrontRightDriveMotorPort = 4;
+        public static final boolean kFrontRightDriveEncoderReversed = true;
+
+        public static final int     kFrontRightTurningMotorPort = 5;
         public static final boolean kFrontRightTurningEncoderReversed = true;
+
+        public static final int     kFrontRightDriveAbsoluteEncoderPort = 6;
+        public static final double  kFrontRightDriveAbsoluteEncoderOffsetRad = -0.254;
+        public static final boolean kFrontRightDriveAbsoluteEncoderReversed = false;
+
+        // Back Left Swerve Drive
+        public static final int     kBackLeftDriveMotorPort = 7;
+        public static final boolean kBackLeftDriveEncoderReversed = true;
+
+        public static final int     kBackLeftTurningMotorPort = 8;
+        public static final boolean kBackLeftTurningEncoderReversed = true;
+
+        public static final int     kBackLeftDriveAbsoluteEncoderPort = 9;
+        public static final double  kBackLeftDriveAbsoluteEncoderOffsetRad = -0.254;
+        public static final boolean kBackLeftDriveAbsoluteEncoderReversed = false;
+
+        // Back Right Swerve Drive
+        public static final int     kBackRightDriveMotorPort = 10;
+        public static final boolean kBackRightDriveEncoderReversed = true;
+
+        public static final int     kBackRightTurningMotorPort = 11;
         public static final boolean kBackRightTurningEncoderReversed = true;
 
-        public static final boolean kFrontLeftDriveEncoderReversed = true;
-        public static final boolean kBackLeftDriveEncoderReversed = true;
-        public static final boolean kFrontRightDriveEncoderReversed = false;
-        public static final boolean kBackRightDriveEncoderReversed = false;
-
-        public static final int kFrontLeftDriveAbsoluteEncoderPort = 0;
-        public static final int kBackLeftDriveAbsoluteEncoderPort = 2;
-        public static final int kFrontRightDriveAbsoluteEncoderPort = 1;
-        public static final int kBackRightDriveAbsoluteEncoderPort = 3;
-
-        public static final boolean kFrontLeftDriveAbsoluteEncoderReversed = false;
-        public static final boolean kBackLeftDriveAbsoluteEncoderReversed = false;
-        public static final boolean kFrontRightDriveAbsoluteEncoderReversed = false;
+        public static final int     kBackRightDriveAbsoluteEncoderPort = 12;
+        public static final double  kBackRightDriveAbsoluteEncoderOffsetRad = -0.254;
         public static final boolean kBackRightDriveAbsoluteEncoderReversed = false;
-
-        public static final double kFrontLeftDriveAbsoluteEncoderOffsetRad = -0.254;
-        public static final double kBackLeftDriveAbsoluteEncoderOffsetRad = -1.252;
-        public static final double kFrontRightDriveAbsoluteEncoderOffsetRad = -1.816;
-        public static final double kBackRightDriveAbsoluteEncoderOffsetRad = -4.811;
-
-        public static final double kPhysicalMaxSpeedMetersPerSecond = 5;
-        public static final double kPhysicalMaxAngularSpeedRadiansPerSecond = 2 * 2 * Math.PI;
-
-        public static final double kTeleDriveMaxSpeedMetersPerSecond = kPhysicalMaxSpeedMetersPerSecond / 4;
-        public static final double kTeleDriveMaxAngularSpeedRadiansPerSecond = //
-                kPhysicalMaxAngularSpeedRadiansPerSecond / 4;
-        public static final double kTeleDriveMaxAccelerationUnitsPerSecond = 3;
-        public static final double kTeleDriveMaxAngularAccelerationUnitsPerSecond = 3;
-
-        
-        // Note: inch * 0.0254 = meters.
-        // Note: Meter * 39.3701 = Inches
 
         // The maximum velocity of the robot in meters per second.
         // This is a measure of how fast the robot should be able to drive in a straight line.
         // The formula for calculating the theoretical maximum velocity is:
         // <Motor free speed RPM> / 60 * <Drive reduction> * <Wheel diameter meters> * pi
+        //
+        //       6380.0  Falcon 500 RPM at free rotation
+        //      /  6.75   MK4i Swerve Drive middle speed gear ratio
+        //     ========
+        //  =  945.1851 Max Wheel RPM
+        //     /     60 Seconds 
+        //    =========
+        //  =    15.753 Wheel Revs Per Second
+        //     *  12.56 Wheel Circumfrence (Inches) 
+        //    =========
+        //  =   197.858 Velocity per Second in Inches
+        //   /       12 Inches / Foot
+        //    =========
+        //  =    16.488 Feet Per Second
+        //  =    5.0256 Meters Per Second
+        //
+        public static final double kPhysicalMaxSpeedMetersPerSecond = 5;
+        public static final double kPhysicalMaxAngularSpeedRadiansPerSecond = 2 * 2 * Math.PI;
 
-        // public static final double MOTOR_FREE_SPEED = 6380.0;         // Falcon 500 RPM at free rotation
-        // public static final double SWERVE_DRIVE_GEAR_RATIO = 6.75;    // MK4i Swerve Drive middle speed gear ratio
-        // public static final double WHEEL_DIAM_INCHES = 4.0 * Math.PI;      // Wheel Diam Inches
-        // public static final double WHEEL_DIAM_METERS = WHEEL_DIAM_INCHES * 0.0254;  // Wheel Diam  Meters
-        // public static final double WHEEL_CIRC_INCHES = WHEEL_DIAM_INCHES * Math.PI; // Wheel Circumfrence Inches
-        // public static final double WHEEL_CIRC_METERS = WHEEL_CIRC_INCHES * 0.0254;
-        // public static final double MAX_VELOCITY_METERS_PER_SECOND = 
-        //         ((MOTOR_FREE_SPEED / 60.0) / SWERVE_DRIVE_GEAR_RATIO) * WHEEL_CIRC_METERS;
-        // public static final double DRIVETRAIN_WHEELBASE_INCHES = 23.75;
-        // public static final double DRIVETRAIN_WHEELBASE_METERS =  DRIVETRAIN_WHEELBASE_INCHES * 0.0254;
-        // public static final double DRIVETRAIN_TRACKWIDTH_INCHES = 23.75;  
-        // public static final double DRIVETRAIN_TRACKWIDTH_METERS = DRIVETRAIN_TRACKWIDTH_INCHES * 0.0254;
+        // Reduce the Max rates for Teleop - Slower for better Control ( 1/4 Too Much ?????)
+        public static final double kTeleDriveMaxSpeedMetersPerSecond = kPhysicalMaxSpeedMetersPerSecond / 4;
+        public static final double kTeleDriveMaxAngularSpeedRadiansPerSecond = //
+                kPhysicalMaxAngularSpeedRadiansPerSecond / 4;
+        public static final double kTeleDriveMaxAccelerationUnitsPerSecond = 3;
+        public static final double kTeleDriveMaxAngularAccelerationUnitsPerSecond = 3;
     }
 
     
