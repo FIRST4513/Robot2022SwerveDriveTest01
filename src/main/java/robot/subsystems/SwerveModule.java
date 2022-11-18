@@ -39,21 +39,22 @@ public class SwerveModule {
         this.absoluteEncoderReversed = absoluteEncoderReversed;
 
         // Drive Motor Config
-        driveMotor      = new WPI_TalonFX(driveMotorId);
+        driveMotor = new WPI_TalonFX(driveMotorId);
         driveMotor.setInverted(driveMotorReversed);
 
         // Turning Motor Config
-        turningMotor    = new WPI_TalonFX(turningMotorId);
+        turningMotor = new WPI_TalonFX(turningMotorId);
         turningMotor.setInverted(turningMotorReversed);
 
         // CANCoder Absolute Turning Encoder Config
         // Set units of the CANCoder to radians and velocity being radians per second
         absoluteEncoder = new CANCoder(absoluteEncoderId);
-        CANCoderConfiguration config = new CANCoderConfiguration();
+
+        CANCoderConfiguration config = new CANCoderConfiguration(); 
         config.sensorCoefficient = 2 * Math.PI / 4096.0;
         config.unitString= "rad";
         config.sensorTimeBase = SensorTimeBase.PerSecond;
-        absoluteEncoder.configAllSettings(config);
+        absoluteEncoder.configAllSettings(config);  // Send the config to the Encoder
 
         // Set Up PID Controller
         turningPidController = new PIDController(SwerveModuleConstants.kPTurning, 0, 0);
@@ -77,15 +78,31 @@ public class SwerveModule {
     //    return turningEncoder.getPosition();
     //}
 
-    //public double getTurningVelocity() {
-    //    // ??? What is the point of this ... The motor has gear reduction and is NOT Absolute ??? 
-    //    return turningEncoder.getVelocity();
-    //}
+    public double getTurningVelocityDegrees() {
+        double rotVel = turningMotor.getSelectedSensorVelocity();    // This is the counts for the last 100ms
+        rotVel = rotVel * 10.0 * SwerveModuleConstants.kTurningEncoderDegreesPerEncoderCount;  // This is the velocity in Degrees Per Second
+        return rotVel;
+    }
+
+    public double getTurningVelocityRadians() {
+        double rotVel = turningMotor.getSelectedSensorVelocity();    // This is the counts for the last 100ms
+        rotVel = rotVel * 10.0 * SwerveModuleConstants.kTurningEncoderRadiansPerEncoderCount;  // This is the velocity in Radians Per Second
+        return rotVel;
+    }
 
     public double getAbsoluteEncoderRad() {
-        double angle = absoluteEncoder.getPosition();           // Position in Radians
-        angle -= absoluteEncoderOffsetRad;                      // Correct for Sensor Misaligned
-        return angle * (absoluteEncoderReversed ? -1.0 : 1.0);  // Change sign as needed
+        double angle = absoluteEncoder.getPosition();            // Position in Radians
+        angle -= absoluteEncoderOffsetRad;                       // Correct for Sensor Misaligned
+        angle = angle * (absoluteEncoderReversed ? -1.0 : 1.0);  // Change sign as needed
+        return angle;
+    }
+
+    public double getAbsoluteEncoderDegrees() {
+        double angle = absoluteEncoder.getPosition();            // Position in Radians
+        angle -= absoluteEncoderOffsetRad;                       // Correct for Sensor Misaligned
+        angle = angle * (absoluteEncoderReversed ? -1.0 : 1.0);  // Change sign as needed
+        angle = Math.toDegrees(angle);                           // Change to Degrees 
+        return angle;
     }
 
     public void resetEncoders() {
