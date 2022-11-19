@@ -154,11 +154,11 @@ public Joystick getdriverJoy() {
     TrajectoryConfig trajectoryConfig = new TrajectoryConfig(
           AutoConstants.kMaxSpeedMetersPerSecond,
           AutoConstants.kMaxAccelerationMetersPerSecondSquared);
-    // Add a swerve drive kinematics constraint to ensure that no wheel velocity of a swerve drive
-    // goes above the max velocity.
+    // Add a swerve drive kinematics constraint to the config to ensure that no wheel velocity
+    // of a swerve drive goes above the max velocity.
     trajectoryConfig.setKinematics(DriveTrainConstants.kDriveKinematics);
 
-    // 2. Create a "trajectory Generator" object
+    // Step 2. Create a "trajectory Generator" object
     Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
             new Pose2d(0, 0, new Rotation2d(0)),
             List.of(
@@ -167,14 +167,14 @@ public Joystick getdriverJoy() {
             new Pose2d(2, -1, Rotation2d.fromDegrees(180)),
             trajectoryConfig);
 
-    // 3. Define PID controllers for tracking trajectory
+    // Step 3. Define PID controllers for tracking trajectory
     PIDController xController = new PIDController(AutoConstants.kPXController, 0, 0);
     PIDController yController = new PIDController(AutoConstants.kPYController, 0, 0);
     ProfiledPIDController thetaController = new ProfiledPIDController(
             AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
     thetaController.enableContinuousInput(-Math.PI, Math.PI);
 
-    // 4. Construct command to follow trajectory
+    // Step 4. Construct command to follow trajectory
     SwerveControllerCommand swerveControllerCommand = new SwerveControllerCommand(
             trajectory,
             m_drivetrainSubSys::getPoseMeters,
@@ -185,7 +185,7 @@ public Joystick getdriverJoy() {
             m_drivetrainSubSys::setModuleStates,
             m_drivetrainSubSys);
 
-    // 5. Add some init and wrap-up, and return everything
+    // Step 5. Add some init and wrap-up, and return everything
     return new SequentialCommandGroup(
             new InstantCommand(() -> m_drivetrainSubSys.resetOdometry(trajectory.getInitialPose())),
             swerveControllerCommand,
