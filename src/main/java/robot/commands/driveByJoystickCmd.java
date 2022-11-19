@@ -68,7 +68,7 @@ public class driveByJoystickCmd extends CommandBase {
         ySpeed = ySpeed * DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;
         turningSpeed = turningSpeed * DriveTrainConstants.kTeleDriveMaxAngularSpeedRadiansPerSecond;
 
-        // Step 3 - Create a "Chassis Speeds" Object from field velocity targets
+        // Step 3 - Create a "Chassis Speeds" Object from field velocity targets and current Gyro Angle
         ChassisSpeeds chassisSpeeds;
         if(  m_joystick.getRawButton(OIConstants.kDriverFieldOrientedButtonIdx)){
             // Field Relative
@@ -80,6 +80,8 @@ public class driveByJoystickCmd extends CommandBase {
         }
 
         // Step 4 - Create a "Swerve Module States" object from the "chassis Speeds" object
+        // This creates a SwerveModuleState Array of Swerve Drive States.
+        // Each array element contains "Drive-Velocity" and "Turn-Angle" values. 
         SwerveModuleState[] moduleStates = DriveTrainConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
 
         // Step 5 - Send "Swerve Module States" to Drivetrain Motors

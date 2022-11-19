@@ -102,6 +102,18 @@ public class drivetrainSubSys extends SubsystemBase {
     }
 
     @Override
+    public void periodic() {
+        odometer.update(getGyroHeadingRotation2d(), frontLeft.getState(), frontRight.getState(), backLeft.getState(),
+                backRight.getState());
+        // Update Smartdash
+        SmartDashboard.putNumber("Robot Heading Degrees", getHeadingDegrees());
+        SmartDashboard.putString("Robot Loc Meters", getPoseMeters().getTranslation().toString());
+        SmartDashboard.putNumber("Robot Loc X Ft", Units.metersToFeet(getPoseMeters().getX()));
+        SmartDashboard.putNumber("Robot Loc Y Ft", Units.metersToFeet(getPoseMeters().getY()));
+        SmartDashboard.putString("Robot Kinematics", DriveTrainConstants.kDriveKinematics.toString());
+    }
+    
+    @Override
     public void simulationPeriodic() {
         // This method will be called once per scheduler run when in simulation
 
@@ -137,19 +149,9 @@ public class drivetrainSubSys extends SubsystemBase {
         odometer.resetPosition(pose, getGyroHeadingRotation2d());
     }
 
-    @Override
-    public void periodic() {
-        odometer.update(getGyroHeadingRotation2d(), frontLeft.getState(), frontRight.getState(), backLeft.getState(),
-                backRight.getState());
-        // Update Smartdash
-        SmartDashboard.putNumber("Robot Heading Degrees", getHeadingDegrees());
-        SmartDashboard.putString("Robot Loc Meters", getPoseMeters().getTranslation().toString());
-        SmartDashboard.putNumber("Robot Loc X Ft", Units.metersToFeet(getPoseMeters().getX()));
-        SmartDashboard.putNumber("Robot Loc Y Ft", Units.metersToFeet(getPoseMeters().getY()));
-        SmartDashboard.putString("Robot Kinematics", DriveTrainConstants.kDriveKinematics.toString());
-    }
 
     public void stopModules() {
+        // Should this be done through setModuleStates method ?????
         frontLeft.stop();
         frontRight.stop();
         backLeft.stop();
@@ -157,7 +159,11 @@ public class drivetrainSubSys extends SubsystemBase {
     }
 
     public void setModuleStates(SwerveModuleState[] desiredStates) {
-        SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, DriveTrainConstants.kPhysicalMaxSpeedMetersPerSecond);
+        // Make sure all wheels are at the same Velocity (in the "desiredStates" Array)
+        SwerveDriveKinematics.desaturateWheelSpeeds(
+            desiredStates, 
+            DriveTrainConstants.kPhysicalMaxSpeedMetersPerSecond);
+        // Send State (Velocity and Angle) to Each Swerve Drive Motor
         frontLeft.setDesiredState(desiredStates[0]);
         frontRight.setDesiredState(desiredStates[1]);
         backLeft.setDesiredState(desiredStates[2]);

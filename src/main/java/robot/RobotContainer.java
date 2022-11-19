@@ -149,13 +149,16 @@ public Joystick getdriverJoy() {
    * @return the command to run in autonomous
   */
   public Command getAutonomousCommand() {
-    // 1. Create trajectory settings
-    TrajectoryConfig trajectoryConfig = new 
-        TrajectoryConfig( AutoConstants.kMaxSpeedMetersPerSecond,
-                          AutoConstants.kMaxAccelerationMetersPerSecondSquared)
-                        .setKinematics(DriveTrainConstants.kDriveKinematics);
 
-    // 2. Generate trajectory
+    // Step 1. Configure trajectory settings
+    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(
+          AutoConstants.kMaxSpeedMetersPerSecond,
+          AutoConstants.kMaxAccelerationMetersPerSecondSquared);
+    // Add a swerve drive kinematics constraint to ensure that no wheel velocity of a swerve drive
+    // goes above the max velocity.
+    trajectoryConfig.setKinematics(DriveTrainConstants.kDriveKinematics);
+
+    // 2. Create a "trajectory Generator" object
     Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
             new Pose2d(0, 0, new Rotation2d(0)),
             List.of(
