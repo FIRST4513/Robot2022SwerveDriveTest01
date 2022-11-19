@@ -150,10 +150,10 @@ public Joystick getdriverJoy() {
   */
   public Command getAutonomousCommand() {
     // 1. Create trajectory settings
-    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(
-            AutoConstants.kMaxSpeedMetersPerSecond,
-            AutoConstants.kMaxAccelerationMetersPerSecondSquared)
-                    .setKinematics(DriveTrainConstants.kDriveKinematics);
+    TrajectoryConfig trajectoryConfig = new 
+        TrajectoryConfig( AutoConstants.kMaxSpeedMetersPerSecond,
+                          AutoConstants.kMaxAccelerationMetersPerSecondSquared)
+                        .setKinematics(DriveTrainConstants.kDriveKinematics);
 
     // 2. Generate trajectory
     Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
@@ -174,7 +174,7 @@ public Joystick getdriverJoy() {
     // 4. Construct command to follow trajectory
     SwerveControllerCommand swerveControllerCommand = new SwerveControllerCommand(
             trajectory,
-            m_drivetrainSubSys::getPose,
+            m_drivetrainSubSys::getPoseMeters,
             DriveTrainConstants.kDriveKinematics,
             xController,
             yController,
@@ -187,8 +187,7 @@ public Joystick getdriverJoy() {
             new InstantCommand(() -> m_drivetrainSubSys.resetOdometry(trajectory.getInitialPose())),
             swerveControllerCommand,
             new InstantCommand(() -> m_drivetrainSubSys.stopModules()));
-}
-  
+  }
 
 }
 

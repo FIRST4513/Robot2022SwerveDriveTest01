@@ -5,12 +5,7 @@ import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix.sensors.CANCoderConfiguration;
 import com.ctre.phoenix.sensors.SensorTimeBase;
 
-import edu.wpi.first.wpilibj.RobotController;
-
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -31,12 +26,26 @@ public class SwerveModule {
     private final boolean absoluteEncoderReversed;
     private final double absoluteEncoderOffsetRad;
 
+    private final String swerveModuleID;
+
     // Constructor
     public SwerveModule(int driveMotorId, int turningMotorId, boolean driveMotorReversed, boolean turningMotorReversed,
                         int absoluteEncoderId, double absoluteEncoderOffset, boolean absoluteEncoderReversed) {
 
         this.absoluteEncoderOffsetRad = absoluteEncoderOffset;
         this.absoluteEncoderReversed = absoluteEncoderReversed;
+
+        if (driveMotorId == DriveTrainConstants.kFrontLeftDriveMotorPort){
+            this.swerveModuleID = "Front Left";
+        } else if (driveMotorId == DriveTrainConstants.kBackLeftDriveMotorPort){ 
+            this.swerveModuleID = "Back Left";
+        } else if (driveMotorId == DriveTrainConstants.kFrontRightDriveMotorPort){ 
+            this.swerveModuleID = "Front Right";
+        } else if (driveMotorId == DriveTrainConstants.kBackRightDriveMotorPort){ 
+            this.swerveModuleID = "Back Right";
+        } else { 
+            this.swerveModuleID = "error";
+        }
 
         // Drive Motor Config
         driveMotor = new WPI_TalonFX(driveMotorId);
@@ -115,14 +124,26 @@ public class SwerveModule {
     }
 
     public void setDesiredState(SwerveModuleState state) {
+        // Passed state provides - Wheel Velocity in Meters/Sec and Wheel Angle in Radians.
         if (Math.abs(state.speedMetersPerSecond) < 0.001) {
-            stop();
+            // If the requested speed is too low just stop the motors and get out.
+            stop(); 
             return;
         }
+        // Compare the current Wheel Angle to Target and determine shortest route
         state = SwerveModuleState.optimize(state, getState().angle);
+        // Power the Drive Motor (This converts a command in meters/sec into -1.0 to +1.0)
         driveMotor.set(state.speedMetersPerSecond / DriveTrainConstants.kPhysicalMaxSpeedMetersPerSecond);
+        // Power the Turning Motor - This uses a PID controller to lock in on Angle (Current Angle , Setpoint)
         turningMotor.set(turningPidController.calculate(getAbsoluteEncoderRad(), state.angle.getRadians()));
-        SmartDashboard.putString("Swerve[" + "absoluteEncoderID" + "] state", state.toString());
+        // Update smart dashboard
+        SmartDashboard.putString("Swerve[" + swerveModuleID + "] State", state.toString());
+        SmartDashboard.putNumber("Swerve[" + swerveModuleID + "] Angle", state.angle.getDegrees());
+        SmartDashboard.putNumber("Swerve[" + swerveModuleID + "] Angle", state.speedMetersPerSecond);
+        SmartDashboard.putNumber("Swerve[" + swerveModuleID + "] Dist Meters", getDrivePosition());
+        SmartDashboard.putNumber("Swerve[" + swerveModuleID + "] Dist Inches", Units.metersToInches(getDrivePosition()));
+        SmartDashboard.putNumber("Swerve[" + swerveModuleID + "] Vel Meters/Sec", getDriveVelocity());
+        SmartDashboard.putNumber("Swerve[" + swerveModuleID + "] Vel Ft/Sec", Units.metersToFeet(getDriveVelocity()));
     }
 
     public void stop() {

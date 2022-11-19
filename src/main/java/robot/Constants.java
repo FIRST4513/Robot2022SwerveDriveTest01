@@ -17,16 +17,14 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 
 public final class Constants {
-
     // ***************************** SwerveModule Constants **********************************
     public static final class SwerveModuleConstants {
-        
-        // Drive Wheel Constant
+        // Drive Wheel Constants
         public static final double kWheelDiameterInches = 4.0;        
         public static final double kWheelDiameterMeters = Units.inchesToMeters(kWheelDiameterInches);
         public static final double kWheelCircInches = 12.56;         
         public static final double kWheelCircMeters = 0.319024; 
-        // 
+    
         // ------------------------  Drive Motor/Encoder Constants  ----------------------
         //
         //      4096 Motor Encoder Counts per MOTOR revolution
@@ -41,7 +39,6 @@ public final class Constants {
         //  --------
         //   = 0.0000115387731 Meters Traveled Per Motor Encoder Count
         //
-        //
         // Note: inch * 0.0254 = meters.
         // Note: Meter * 39.3701 = Inches
         // Note: radians per Encoder Count (1 degree = pi/180 = 0.01745)
@@ -54,7 +51,6 @@ public final class Constants {
         public static final double kDriveEncoderRot2Meter = kDriveMotorGearRatio * Math.PI * kWheelDiameterMeters; // ???
         public static final double kDriveEncoderRPM2MeterPerSec = kDriveEncoderRot2Meter / 60;                     // ??
 
-        //
         // ------------------------  Turning Motor/Encoder Constants  ----------------------
         // This motors Encoder is only useful for wheel turning VELOCITY. Not for POSITION!
         //

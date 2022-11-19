@@ -23,7 +23,7 @@ import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 
@@ -114,17 +114,22 @@ public class drivetrainSubSys extends SubsystemBase {
         gyro.reset();
     }
 
-    public double getHeading() {
+    public double getHeadingDegrees() {
         // This will return values from -180 to +180 degrees of yaw
         return Math.IEEEremainder(gyro.getAngle(), 360);
     }
 
     public Rotation2d getRotation2d() {
         // this will return a Rotation2d object of the yaw value -180 to +180 degree
-        return Rotation2d.fromDegrees(getHeading());
+        return Rotation2d.fromDegrees(getHeadingDegrees());
     }
 
-    public Pose2d getPose() {
+    public Pose2d getPoseMeters() {
+        return odometer.getPoseMeters();
+    }
+
+    
+    public Pose2d getPoseFeet() {
         return odometer.getPoseMeters();
     }
 
@@ -136,8 +141,12 @@ public class drivetrainSubSys extends SubsystemBase {
     public void periodic() {
         odometer.update(getRotation2d(), frontLeft.getState(), frontRight.getState(), backLeft.getState(),
                 backRight.getState());
-        SmartDashboard.putNumber("Robot Heading", getHeading());
-        SmartDashboard.putString("Robot Location", getPose().getTranslation().toString());
+        // Update Smartdash
+        SmartDashboard.putNumber("Robot Heading Degrees", getHeadingDegrees());
+        SmartDashboard.putString("Robot Loc Meters", getPoseMeters().getTranslation().toString());
+        SmartDashboard.putNumber("Robot Loc X Ft", Units.metersToFeet(getPoseMeters().getX()));
+        SmartDashboard.putNumber("Robot Loc Y Ft", Units.metersToFeet(getPoseMeters().getY()));
+        SmartDashboard.putString("Robot Kinematics", DriveTrainConstants.kDriveKinematics.toString());
     }
 
     public void stopModules() {
