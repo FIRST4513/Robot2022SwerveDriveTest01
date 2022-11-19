@@ -41,38 +41,48 @@ public class driveByJoystickCmd extends CommandBase {
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
-        // 1. Get real-time joystick inputs
-        double xSpeed = m_joystick.getX();
-        double ySpeed = m_joystick.getY();
-        double turningSpeed = m_joystick.getTwist();
-        double throttle = m_joystick.getThrottle();
-        throttle = (-throttle/2) + 0.5;                     // convert -1:1 to 0:1
 
-        // 2. Apply deadband
-        xSpeed = Math.abs(xSpeed) > OIConstants.kDeadband ? xSpeed : 0.0;
-        ySpeed = Math.abs(ySpeed) > OIConstants.kDeadband ? ySpeed : 0.0;
-        turningSpeed = Math.abs(turningSpeed) > OIConstants.kDeadband ? turningSpeed : 0.0;
+        // Step 1 - Get joystick Inputs
+        // Step 1a) Get joystick inputs from individual axis
+            double xSpeed = m_joystick.getX();
+            double ySpeed = m_joystick.getY();
+            double turningSpeed = m_joystick.getTwist();
+            double throttle = (-m_joystick.getThrottle()/2) + 0.5; // convert from ( -1:1 ) to ( 0:1 ) 
 
-        // 3. Make the driving smoother
-        xSpeed = (xSpeed * throttle) * DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;
-        ySpeed = (ySpeed * throttle) * DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;
-        turningSpeed = (turningSpeed * throttle) * DriveTrainConstants.kTeleDriveMaxAngularSpeedRadiansPerSecond;
+        // Step 1b) Apply deadband (in case joystick doesn't return fully to Zero position)
+            xSpeed = Math.abs(xSpeed) > OIConstants.kDeadband ? xSpeed : 0.0;
+            ySpeed = Math.abs(ySpeed) > OIConstants.kDeadband ? ySpeed : 0.0;
+            turningSpeed = Math.abs(turningSpeed) > OIConstants.kDeadband ? turningSpeed : 0.0;
 
-        // 4. Construct desired chassis speeds
+        // Step 1c) Limit Speeds based on throttle setting
+            xSpeed = xSpeed * throttle;
+            ySpeed = ySpeed * throttle;
+            turningSpeed = turningSpeed * throttle;
+            // If Using Xbox Controller with no throttle use limiting constants from Constants
+            //xSpeed = xSpeed * DriveTrainConstants.kTeleDriveThrottle;
+            //ySpeed = ySpeed * DriveTrainConstants.kTeleDriveThrottle;
+            //turningSpeed = turningSpeed * DriveTrainConstants.kTeleDriveThrottle;
+
+        // Step 2 - Convert Joystick values to Field Velocity (Meters/Sec)
+        xSpeed = xSpeed * DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;
+        ySpeed = ySpeed * DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;
+        turningSpeed = turningSpeed * DriveTrainConstants.kTeleDriveMaxAngularSpeedRadiansPerSecond;
+
+        // Step 3 - Create a "Chassis Speeds" Object from field velocity targets
         ChassisSpeeds chassisSpeeds;
         if(  m_joystick.getRawButton(OIConstants.kDriverFieldOrientedButtonIdx)){
-            // Relative to field
+            // Field Relative
             chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                    xSpeed, ySpeed, turningSpeed, m_drivetrainSubSys.getRotation2d());
+                    xSpeed, ySpeed, turningSpeed, m_drivetrainSubSys.getGyroHeadingRotation2d());
         } else {
-            // Relative to robot
+            // Chassis Relative
             chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, turningSpeed);
         }
 
-        // 5. Convert chassis speeds to individual module states
+        // Step 4 - Create a "Swerve Module States" object from the "chassis Speeds" object
         SwerveModuleState[] moduleStates = DriveTrainConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
 
-        // 6. Output each module states to wheels
+        // Step 5 - Send "Swerve Module States" to Drivetrain Motors
         m_drivetrainSubSys.setModuleStates(moduleStates);
     }
 

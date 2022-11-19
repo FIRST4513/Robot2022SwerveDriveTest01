@@ -119,7 +119,7 @@ public class drivetrainSubSys extends SubsystemBase {
         return Math.IEEEremainder(gyro.getAngle(), 360);
     }
 
-    public Rotation2d getRotation2d() {
+    public Rotation2d getGyroHeadingRotation2d() {
         // this will return a Rotation2d object of the yaw value -180 to +180 degree
         return Rotation2d.fromDegrees(getHeadingDegrees());
     }
@@ -134,12 +134,12 @@ public class drivetrainSubSys extends SubsystemBase {
     }
 
     public void resetOdometry(Pose2d pose) {
-        odometer.resetPosition(pose, getRotation2d());
+        odometer.resetPosition(pose, getGyroHeadingRotation2d());
     }
 
     @Override
     public void periodic() {
-        odometer.update(getRotation2d(), frontLeft.getState(), frontRight.getState(), backLeft.getState(),
+        odometer.update(getGyroHeadingRotation2d(), frontLeft.getState(), frontRight.getState(), backLeft.getState(),
                 backRight.getState());
         // Update Smartdash
         SmartDashboard.putNumber("Robot Heading Degrees", getHeadingDegrees());
