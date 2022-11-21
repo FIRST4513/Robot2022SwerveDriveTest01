@@ -51,9 +51,9 @@ public class driveByJoystickCmd extends CommandBase {
             double throttle = (-m_joystick.getThrottle()/2) + 0.5; // convert from ( -1:1 ) to ( 0:1 ) 
 
         // Step 1b) Apply deadband (in case joystick doesn't return fully to Zero position)
-            xSpeed = Math.abs(xSpeed) > OIConstants.kDeadband ? xSpeed : 0.0;
-            ySpeed = Math.abs(ySpeed) > OIConstants.kDeadband ? ySpeed : 0.0;
-            turningSpeed = Math.abs(turningSpeed) > OIConstants.kDeadband ? turningSpeed : 0.0;
+            xSpeed = deadBand(xSpeed);
+            ySpeed = deadBand(ySpeed);
+            turningSpeed = deadBand(turningSpeed);
 
         // Step 1c) Limit Speeds based on throttle setting
             xSpeed = xSpeed * throttle;
@@ -99,6 +99,19 @@ public class driveByJoystickCmd extends CommandBase {
     @Override
     public boolean isFinished() {
         return false;
+    }
+
+    public double deadBand(double value){
+        // Deadband Calculation
+        if((value <=  OIConstants.kDeadband) && (value >= - OIConstants.kDeadband)){
+            return 0;
+        }
+        if (value > 0) {
+            value=(value - OIConstants.kDeadband) * (1 + OIConstants.kDeadband);		// Scale Yvalue smoothly to + 1
+        } else {
+            value = - (-value - OIConstants.kDeadband) * (1 + OIConstants.kDeadband);	// Scale Yvalue smoothly to -1
+        }
+        return value;
     }
 
     @Override
