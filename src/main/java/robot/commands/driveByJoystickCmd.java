@@ -45,8 +45,8 @@ public class driveByJoystickCmd extends CommandBase {
 
         // Step 1 - Get joystick Inputs
         // Step 1a) Get joystick inputs from individual axis
-            double xSpeed = m_joystick.getX();
-            double ySpeed = m_joystick.getY();
+            double xSpeed = m_joystick.getY();      // NOTE: "Y" axis to get "X" (horizontal)Speed
+            double ySpeed = m_joystick.getX();      // NOTE: "X" axis to get "Y" (vertical)Speed
             double turningSpeed = m_joystick.getTwist();
             double throttle = (-m_joystick.getThrottle()/2) + 0.5; // convert from ( -1:1 ) to ( 0:1 ) 
 
