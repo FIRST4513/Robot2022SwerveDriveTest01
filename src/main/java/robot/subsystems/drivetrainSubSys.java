@@ -107,6 +107,7 @@ public class drivetrainSubSys extends SubsystemBase {
                 backRight.getState());
         // Update Smartdash
         SmartDashboard.putNumber("Robot Heading Degrees", getHeadingDegrees());
+        SmartDashboard.putNumber("Robot Raw Gyro Heading", gyro.getAngle());
         SmartDashboard.putString("Robot Loc Meters", getPoseMeters().getTranslation().toString());
         SmartDashboard.putNumber("Robot Loc X Ft", Units.metersToFeet(getPoseMeters().getX()));
         SmartDashboard.putNumber("Robot Loc Y Ft", Units.metersToFeet(getPoseMeters().getY()));
