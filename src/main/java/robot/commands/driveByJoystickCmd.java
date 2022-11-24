@@ -12,6 +12,7 @@
 
 package robot.commands;
 import robot.RobotContainer;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Joystick;
@@ -27,10 +28,14 @@ public class driveByJoystickCmd extends CommandBase {
     private final drivetrainSubSys m_drivetrainSubSys;
     private Joystick m_joystick;
 
+    private SlewRateLimiter xLimiter, yLimiter, turningLimiter;
+
     public driveByJoystickCmd(drivetrainSubSys subsystem ) {
         m_drivetrainSubSys = subsystem;
         addRequirements(m_drivetrainSubSys);
-
+        this.xLimiter= new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAccelerationUnitsPerSecond);
+        this.yLimiter= new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAccelerationUnitsPerSecond);
+        this.turningLimiter= new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAngularAccelerationUnitsPerSecond);
     }
 
     // Called when the command is initially scheduled.
@@ -64,10 +69,16 @@ public class driveByJoystickCmd extends CommandBase {
             //ySpeed = ySpeed * DriveTrainConstants.kTeleDriveThrottle;
             //turningSpeed = turningSpeed * DriveTrainConstants.kTeleDriveThrottle;
 
-        // Step 2 - Convert Joystick values to Field Velocity (Meters/Sec)
+
+        // Step 2a) - Convert Joystick values to Field Velocity (Meters/Sec)
         xSpeed = xSpeed * DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;
         ySpeed = ySpeed * DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;
         turningSpeed = turningSpeed * DriveTrainConstants.kTeleDriveMaxAngularSpeedRadiansPerSecond;
+
+        // Step 2b) - Limit Field Velocities based upon MAX acceleration constants
+        xSpeed = xLimiter.calculate(xSpeed);
+        ySpeed = xLimiter.calculate(ySpeed);
+        turningSpeed = xLimiter.calculate(turningSpeed);
 
         // Step 3 - Create a "Chassis Speeds" Object from field velocity targets and current Gyro Angle
         ChassisSpeeds chassisSpeeds;
