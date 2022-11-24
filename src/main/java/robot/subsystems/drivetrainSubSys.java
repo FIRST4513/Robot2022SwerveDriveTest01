@@ -130,7 +130,7 @@ public class drivetrainSubSys extends SubsystemBase {
         // Not limited to +-360, rolls over as turns continue
         // Returns angle +CW, -CCW .... This needs to be inverted for Kinematics
         double angle =  gyro.getAngle();
-        if (DriveTrainConstants.invertGyro) angle *= -1; // Invert to CW(-)  CCW(+)
+        if (DriveTrainConstants.invertGyro) angle *= -1; // Invert to CW(0 to -180)  CCW(0 to +180)
         return angle;
     
         //return Math.IEEEremainder(gyro.getAngle();, 360);  // Recalculates to -180 to +180 YAW degrees
@@ -139,7 +139,7 @@ public class drivetrainSubSys extends SubsystemBase {
     public double getGyroYaw(){
         // returns Angle -180 to + 180 degrees
         double yaw = gyro.getYaw();
-        if (DriveTrainConstants.invertGyro) yaw *= -1; // Invert to CW(-)  CCW(+)
+        if (DriveTrainConstants.invertGyro) yaw *= -1; // Invert to CW(0 to -180)  CCW(0 to +180)
         return yaw;
     }
 
@@ -190,8 +190,7 @@ public class drivetrainSubSys extends SubsystemBase {
     // --------------------------- Update ShuffleBoard -------------------------------
     private void updateShuffleBoard(){
         SmartDashboard.putNumber("Robot Gyro Hdg Degrees",  getGyroHeadingDegrees());
-        SmartDashboard.putNumber("Robot Gyro Angle",        gyro.getAngle());
-        SmartDashboard.putNumber("Robot Gyro Yaw",          gyro.getYaw());
+        SmartDashboard.putNumber("Robot Gyro Yaw",          getGyroYaw());
         SmartDashboard.putString("Robot Loc Meters",        getPoseMeters().getTranslation().toString());
         SmartDashboard.putNumber("Robot Loc X Ft",          Units.metersToFeet(getPoseMeters().getX()));
         SmartDashboard.putNumber("Robot Loc Y Ft",          Units.metersToFeet(getPoseMeters().getY()));

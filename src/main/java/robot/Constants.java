@@ -156,7 +156,7 @@ public final class Constants {
         public static final double kTeleDriveMaxAccelerationMetersPerSecond = 3;
         public static final double kTeleDriveMaxAngularAccelerationRadiansPerSecond = 3;
 
-        public static final boolean invertGyro = false; // Always ensure Gyro is CCW+ CW-
+        public static final boolean invertGyro = true; // Always ensure Gyro is CCW+ CW-
     }
 
     // ***************************** Autonomous Constants **********************************
