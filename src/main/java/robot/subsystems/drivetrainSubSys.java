@@ -128,14 +128,19 @@ public class drivetrainSubSys extends SubsystemBase {
     public double getGyroHeadingDegrees() {
         // Returns total ACCUMULATED Z axis Angle ie) -xxxxxx degree to +xxxxxx degrees
         // Not limited to +-360, rolls over as turns continue
-        return gyro.getAngle();
+        // Returns angle +CW, -CCW .... This needs to be inverted for Kinematics
+        double angle =  gyro.getAngle();
+        if (DriveTrainConstants.invertGyro) angle *= -1; // Invert to CW(-)  CCW(+)
+        return angle;
     
         //return Math.IEEEremainder(gyro.getAngle();, 360);  // Recalculates to -180 to +180 YAW degrees
     }
 
     public double getGyroYaw(){
         // returns Angle -180 to + 180 degrees
-        return gyro.getYaw();
+        double yaw = gyro.getYaw();
+        if (DriveTrainConstants.invertGyro) yaw *= -1; // Invert to CW(-)  CCW(+)
+        return yaw;
     }
 
     public Rotation2d getGyroHeadingRotation2d() {
