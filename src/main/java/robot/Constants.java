@@ -23,14 +23,14 @@ public final class Constants {
         public static final double kWheelDiameterInches = 4.0;        
         public static final double kWheelDiameterMeters = Units.inchesToMeters(kWheelDiameterInches);
         public static final double kWheelCircInches = 12.56;         
-        public static final double kWheelCircMeters = 0.319024; 
+        public static final double kWheelCircMeters = Units.inchesToMeters(kWheelCircInches);
     
         // ------------------------  Drive Motor/Encoder Constants  ----------------------
         //
-        //      4096 Motor Encoder Counts per MOTOR revolution
-        //    * 6.75 gear ratio - Motor revolutions to 1 wheel revolution
-        //  --------
-        //  = 27,648 Motor Encoder Counts Per WHEEL Revolution
+        //           4096 Motor Encoder Counts per MOTOR revolution
+        //   /   0.014815 Gear Ratio is 1 / 6.75 = 0.14815 Wheel revolutions per Motor revolution
+        //   ------------
+        //       = 27,648 Motor Encoder Counts Per WHEEL Revolution
         // 
         //      4.00  Inches Wheel Diameter
         //     12.56 Inches Wheel Circumfrence
@@ -45,34 +45,30 @@ public final class Constants {
         //
         // ****************************************************************
         public static final double kDriveMotorGearRatio = 1 / 6.75;
-        public static final double kDriveEncoderCountsPerRev = 4096;
-        public static final double kDriveEncoderDistancePerUnitMeters = 0.0000115387731;
+        public static final double kDriveEncoderCountsPerMotorRev = 4096;
+        public static final double kDriveEncoderCountsPerWheelRev = 
+                    kDriveEncoderCountsPerMotorRev / kDriveMotorGearRatio;
+        public static final double kDriveEncoderDistancePerUnitInches =
+                    kWheelCircInches / kDriveEncoderCountsPerWheelRev;
+        public static final double kDriveEncoderDistancePerUnitMeters =
+                     Units.inchesToMeters(kDriveEncoderDistancePerUnitInches);    
 
-        public static final double kDriveEncoderRot2Meter = kDriveMotorGearRatio * Math.PI * kWheelDiameterMeters; // ???
-        public static final double kDriveEncoderRPM2MeterPerSec = kDriveEncoderRot2Meter / 60;                     // ??
-
-        // ------------------------  Turning Motor/Encoder Constants  ----------------------
-        // This motors Encoder is only useful for wheel turning VELOCITY. Not for POSITION!
-        //
-        //        4096 Motor Encoder Counts per MOTOR revolution
-        //    * 21.428 gear ratio - Motor revolutions to 1 wheel rotation through 360 degrees (150/7 : 1)
-        //  ==========
-        //  =   87,769  Motor Encoder Counts Per WHEEL Rotation through 360 degrees
+        // -------------------  CANCoder Absolute Encoder Constants  ----------------------
+        // This Encoder is 12 bit (4096)
         //
         //        360 degrees 
-        //   / 87,769 Divide by Motor Encoder Counts Per WHEEL Rotation
+        //   /   4096 Divide by Absolute Encoder Counts Per WHEEL Rotation
         //  =========
-        //  = 0.00410167 degrees per Encoder Count
-        //                  radians per Encoder Count (1 degree = pi/180 = 0.01745)
+        //  = 0.08789    degrees per Encoder Count
+        //  = 0.00153367 radians per Encoder Count (1 degree = pi/180 = 0.01745)
         // 
         // ****************************************************************
-        public static final double kTurningMotorGearRatio = 1 / 21.428;     // Spec Sheet 150/7 : 1
-        public static final double kTurningMotorEncoderCountsPerRev = 4096;
-        public static final double kTurningEncoderDegreesPerEncoderCount = 0.00410167;
-        public static final double kTurningEncoderRadiansPerEncoderCount = Math.toRadians(kTurningEncoderDegreesPerEncoderCount);
 
-        public static final double kTurningEncoderRot2Rad = kTurningMotorGearRatio * 2 * Math.PI;   // ?????????????
-        public static final double kTurningEncoderRPM2RadPerSec = kTurningEncoderRot2Rad / 60;  // ?????????????
+        public static final double kTurningEncoderCountsPerRev = 4096;
+        public static final double kTurningEncoderDegreesPerEncoderCount =
+                    360 / kTurningEncoderCountsPerRev;
+        public static final double kTurningEncoderRadiansPerEncoderCount =
+                    Math.toRadians(kTurningEncoderDegreesPerEncoderCount);
 
         // ------------------------  PID Constant  ------------------------------
         public static final double kPTurning = 0.5;
@@ -82,8 +78,8 @@ public final class Constants {
     public static final class DriveTrainConstants {
 
         // Drivetrain Kinematics
-        public static final double kTrackWidth = Units.inchesToMeters(23.75); // Between right and left wheels
-        public static final double kWheelBase = Units.inchesToMeters(23.75);  // Between front and back wheels
+        public static final double kTrackWidth = Units.inchesToMeters(23.75); // Between right/left wheels
+        public static final double kWheelBase = Units.inchesToMeters(23.75);  // Between front/back wheels
 
         public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
                 new Translation2d(kWheelBase / 2, -kTrackWidth / 2),
@@ -95,8 +91,9 @@ public final class Constants {
         public static final int     kFrontLeftDriveMotorPort = 1;
         public static final boolean kFrontLeftDriveEncoderReversed = true;
         public static final int     kFrontLeftTurningMotorPort = 5;
-        public static final boolean kFrontLeftTurningEncoderReversed = true;
+        public static final boolean kFrontLeftTurningEncoderReversed = true;    // Not Used ????
         public static final int     kFrontLeftDriveAbsoluteEncoderPort = 9;
+
         public static final double  kFrontLeftDriveAbsoluteEncoderOffsetRad = -0.019;
         public static final boolean kFrontLeftDriveAbsoluteEncoderReversed = false;
 
@@ -148,23 +145,24 @@ public final class Constants {
         //  =    5.0256 Meters Per Second
         //
         public static final double kPhysicalMaxSpeedMetersPerSecond = 5;
-        public static final double kPhysicalMaxAngularSpeedRadiansPerSecond = 2 * 2 * Math.PI;
+        public static final double kPhysicalMaxAngularSpeedRadiansPerSecond = 2 * 2 * Math.PI; // 2 Rev/Sec
 
         // Reduce the Max rates for Teleop - Slower for better Control ( 1/4 Too Much ?????)
-        public static final double kTeleDriveThrottle = 0.25;       // Limit speeds to 1/4 Normal
-        public static final double kTeleDriveMaxSpeedMetersPerSecond = kPhysicalMaxSpeedMetersPerSecond * kTeleDriveThrottle;
-        public static final double kTeleDriveMaxAngularSpeedRadiansPerSecond = //
+        public static final double kTeleDriveThrottle = 0.25;       // Limit speeds to 1/4 Normal in teleop
+        public static final double kTeleDriveMaxSpeedMetersPerSecond =
+                kPhysicalMaxSpeedMetersPerSecond * kTeleDriveThrottle;
+        public static final double kTeleDriveMaxAngularSpeedRadiansPerSecond = 
                 kPhysicalMaxAngularSpeedRadiansPerSecond * kTeleDriveThrottle;
         public static final double kTeleDriveMaxAccelerationUnitsPerSecond = 3;
         public static final double kTeleDriveMaxAngularAccelerationUnitsPerSecond = 3;
     }
 
-    
     // ***************************** Autonomous Constants **********************************
     public static final class AutoConstants {
-        public static final double kMaxSpeedMetersPerSecond = DriveTrainConstants.kPhysicalMaxSpeedMetersPerSecond / 4;
-        public static final double kMaxAngularSpeedRadiansPerSecond = //
-        DriveTrainConstants.kPhysicalMaxAngularSpeedRadiansPerSecond / 10;
+        public static final double kMaxSpeedMetersPerSecond =
+                DriveTrainConstants.kPhysicalMaxSpeedMetersPerSecond / 4;
+        public static final double kMaxAngularSpeedRadiansPerSecond = 
+                DriveTrainConstants.kPhysicalMaxAngularSpeedRadiansPerSecond / 10;
         public static final double kMaxAccelerationMetersPerSecondSquared = 3;
         public static final double kMaxAngularAccelerationRadiansPerSecondSquared = Math.PI / 4;
         public static final double kPXController = 1.5;
@@ -177,16 +175,13 @@ public final class Constants {
                         kMaxAngularAccelerationRadiansPerSecondSquared);
     }
 
-    
     // ***************************** OI Constants **********************************
     public static final class OIConstants {
         public static final int kDriverControllerPort = 0;
-
         public static final int kDriverYAxis = 1;
         public static final int kDriverXAxis = 0;
         public static final int kDriverRotAxis = 4;
-        public static final int kDriverFieldOrientedButtonIdx = 1;
-
+        public static final int kDriverChassisOrientedButtonIdx = 2;
         public static final double kDeadband = 0.05;
     }
 }

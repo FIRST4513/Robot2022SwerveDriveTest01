@@ -29,8 +29,9 @@ public class SwerveModule {
     private final String swerveModuleID;
 
     // Constructor
-    public SwerveModule(int driveMotorId, int turningMotorId, boolean driveMotorReversed, boolean turningMotorReversed,
-                        int absoluteEncoderId, double absoluteEncoderOffset, boolean absoluteEncoderReversed) {
+    public SwerveModule(int driveMotorId, int turningMotorId, boolean driveMotorReversed,
+                        boolean turningMotorReversed, int absoluteEncoderId, double absoluteEncoderOffset,
+                        boolean absoluteEncoderReversed) {
 
         this.absoluteEncoderOffsetRad = absoluteEncoderOffset;
         this.absoluteEncoderReversed = absoluteEncoderReversed;
@@ -69,44 +70,62 @@ public class SwerveModule {
         turningPidController = new PIDController(SwerveModuleConstants.kPTurning, 0, 0);
         turningPidController.enableContinuousInput(-Math.PI, Math.PI);
 
-        resetEncoders();
+        resetDriveEncoder();
     }
 
-    public double getDrivePosition() {
-        return (driveMotor.getSelectedSensorPosition() * SwerveModuleConstants.kDriveEncoderDistancePerUnitMeters);
+
+    // --------- Drive Encoder Methods -----------
+    public double getDriveEncoderRaw(){
+        return driveMotor.getSelectedSensorPosition();
     }
 
-    public double getDriveVelocity() {
-        double vel = driveMotor.getSelectedSensorVelocity();    // This is the counts for the last 100ms
-        vel = vel * 10.0 * SwerveModuleConstants.kDriveEncoderDistancePerUnitMeters;  // This is the velocity in Meters Per Second
-        return vel;
+    public double getDriveDistMeters() {
+        return (driveMotor.getSelectedSensorPosition() * 
+                    SwerveModuleConstants.kDriveEncoderDistancePerUnitMeters);
+    }
+    public double getDriveDistInches() {
+        return (driveMotor.getSelectedSensorPosition() *
+                    SwerveModuleConstants.kDriveEncoderDistancePerUnitInches);
     }
     
-    //public double getTurningPosition() {
-    //    // ??? What is the point of this ... The motor has gear reduction and is NOT Absolute ???
-    //    return turningEncoder.getPosition();
-    //}
-
-    public double getTurningVelocityDegrees() {
-        double rotVel = turningMotor.getSelectedSensorVelocity();    // This is the counts for the last 100ms
-        rotVel = rotVel * 10.0 * SwerveModuleConstants.kTurningEncoderDegreesPerEncoderCount;  // This is the velocity in Degrees Per Second
-        return rotVel;
+    public double getDriveVelMeters() {
+        double vel = driveMotor.getSelectedSensorVelocity();    // This is the counts for the last 100ms
+        // This is the velocity in Meters Per Second
+        return ((vel * 10.0) * SwerveModuleConstants.kDriveEncoderDistancePerUnitMeters);  
+    }
+    
+    public double getDriveVelInches() {
+        double vel = driveMotor.getSelectedSensorVelocity();    // This is the counts for the last 100ms
+        // This is the velocity in Inches Per Second
+        return ((vel * 10.0) * SwerveModuleConstants.kDriveEncoderDistancePerUnitInches);
+    }
+    public void resetDriveEncoder() {
+        driveMotor.setSelectedSensorPosition(0);        // Set Drive Motor Distance to Zero
     }
 
-    public double getTurningVelocityRadians() {
+
+    // --------- Absolute Encoder Methods -----------
+    public double getTurningVelRadians() {
         double rotVel = turningMotor.getSelectedSensorVelocity();    // This is the counts for the last 100ms
-        rotVel = rotVel * 10.0 * SwerveModuleConstants.kTurningEncoderRadiansPerEncoderCount;  // This is the velocity in Radians Per Second
-        return rotVel;
+        // This is the velocity in Radians Per Second
+        return ((rotVel * 10.0) * SwerveModuleConstants.kTurningEncoderRadiansPerEncoderCount); 
     }
 
-    public double getAbsoluteEncoderRad() {
+    public double getTurningVelDegrees() {
+        double rotVel = turningMotor.getSelectedSensorVelocity();    // This is the counts for the last 100ms
+        // This is the velocity in Degrees Per Second
+        return ((rotVel * 10.0) * SwerveModuleConstants.kTurningEncoderDegreesPerEncoderCount); 
+    }
+
+    public double getWheelAngleRadians() {
         double angle = absoluteEncoder.getPosition();            // Position in Radians
         angle -= absoluteEncoderOffsetRad;                       // Correct for Sensor Misaligned
         angle = angle * (absoluteEncoderReversed ? -1.0 : 1.0);  // Change sign as needed
         return angle;
     }
 
-    public double getAbsoluteEncoderDegrees() {
+    public double getWheelAngleDegrees() {
+        // Degrees 0 to +-180 Degrees
         double angle = absoluteEncoder.getPosition();            // Position in Radians
         angle -= absoluteEncoderOffsetRad;                       // Correct for Sensor Misaligned
         angle = angle * (absoluteEncoderReversed ? -1.0 : 1.0);  // Change sign as needed
@@ -114,13 +133,15 @@ public class SwerveModule {
         return angle;
     }
 
-    public void resetEncoders() {
-        driveMotor.setSelectedSensorPosition(0);        // Set Drive Motor Distance to Zero
-        turningMotor.setSelectedSensorPosition(0);      // Not really Needed ????
-    }
+    public double getWheelAngleRaw(){
+        // Position in Radians
+        return absoluteEncoder.getPosition();
+    }    
+
+    // -------------- Swerve Module STATE Methods -----------
 
     public SwerveModuleState getState() {
-        return new SwerveModuleState(getDriveVelocity(), new Rotation2d(getAbsoluteEncoderRad()));
+        return new SwerveModuleState(getDriveVelMeters(), new Rotation2d(getWheelAngleRadians()));
     }
 
     public void setDesiredState(SwerveModuleState state) {
@@ -135,15 +156,15 @@ public class SwerveModule {
         // Power the Drive Motor (This converts a command in meters/sec into -1.0 to +1.0)
         driveMotor.set(state.speedMetersPerSecond / DriveTrainConstants.kPhysicalMaxSpeedMetersPerSecond);
         // Power the Turning Motor - This uses a PID controller to lock in on Angle (Current Angle , Setpoint)
-        turningMotor.set(turningPidController.calculate(getAbsoluteEncoderRad(), state.angle.getRadians()));
+        turningMotor.set(turningPidController.calculate(getWheelAngleRadians(), state.angle.getRadians()));
         // Update smart dashboard
         SmartDashboard.putString( swerveModuleID + " State", state.toString());
-        SmartDashboard.putNumber( swerveModuleID + " Angle", state.angle.getDegrees());
-        SmartDashboard.putNumber( swerveModuleID + " Angle", state.speedMetersPerSecond);
-        SmartDashboard.putNumber( swerveModuleID + " Dist Meters", getDrivePosition());
-        SmartDashboard.putNumber( swerveModuleID + " Dist Inches", Units.metersToInches(getDrivePosition()));
-        SmartDashboard.putNumber( swerveModuleID + " Vel Meters/Sec", getDriveVelocity());
-        SmartDashboard.putNumber( swerveModuleID + " Vel Ft/Sec", Units.metersToFeet(getDriveVelocity()));
+        SmartDashboard.putNumber( swerveModuleID + " State Angle Degrees", state.angle.getDegrees());
+        SmartDashboard.putNumber( swerveModuleID + " State Speed Meters", state.speedMetersPerSecond);
+        SmartDashboard.putNumber( swerveModuleID + " Dist Meters", getDriveDistMeters());
+        SmartDashboard.putNumber( swerveModuleID + " Dist Inches", getDriveDistInches());
+        SmartDashboard.putNumber( swerveModuleID + " Vel Meters/Sec", getDriveVelMeters());
+        SmartDashboard.putNumber( swerveModuleID + " Vel Ft/Sec", getDriveVelInches()/12.0);
     }
 
     public void stop() {

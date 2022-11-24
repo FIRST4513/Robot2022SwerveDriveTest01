@@ -28,14 +28,17 @@ public class driveByJoystickCmd extends CommandBase {
     private final drivetrainSubSys m_drivetrainSubSys;
     private Joystick m_joystick;
 
-    private SlewRateLimiter xLimiter, yLimiter, turningLimiter;
+    private SlewRateLimiter xLimiter;
+    private SlewRateLimiter yLimiter;
+    private SlewRateLimiter turningLimiter;
+
 
     public driveByJoystickCmd(drivetrainSubSys subsystem ) {
         m_drivetrainSubSys = subsystem;
         addRequirements(m_drivetrainSubSys);
-        this.xLimiter= new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAccelerationUnitsPerSecond);
-        this.yLimiter= new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAccelerationUnitsPerSecond);
-        this.turningLimiter= new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAngularAccelerationUnitsPerSecond);
+        this.xLimiter = new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAccelerationUnitsPerSecond);
+        this.yLimiter = new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAccelerationUnitsPerSecond);
+        this.turningLimiter = new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAngularAccelerationUnitsPerSecond);
     }
 
     // Called when the command is initially scheduled.
@@ -50,8 +53,8 @@ public class driveByJoystickCmd extends CommandBase {
 
         // Step 1 - Get joystick Inputs
         // Step 1a) Get joystick inputs from individual axis
-            double xSpeed = m_joystick.getY();      // NOTE: "Y" axis to get "X" (horizontal)Speed
-            double ySpeed = m_joystick.getX();      // NOTE: "X" axis to get "Y" (vertical)Speed
+            double xSpeed = m_joystick.getY();      // NOTE: "Y" axis to get "X" (Fwd/Back) Speed
+            double ySpeed = m_joystick.getX();      // NOTE: "X" axis to get "Y" (Left/RT)  Speed
             double turningSpeed = m_joystick.getTwist();
             double throttle = (-m_joystick.getThrottle()/2) + 0.5; // convert from ( -1:1 ) to ( 0:1 ) 
 
@@ -61,34 +64,33 @@ public class driveByJoystickCmd extends CommandBase {
             turningSpeed = deadBand(turningSpeed);
 
         // Step 1c) Limit Speeds based on throttle setting
-            xSpeed = xSpeed * throttle;
-            ySpeed = ySpeed * throttle;
-            turningSpeed = turningSpeed * throttle;
+            xSpeed *= throttle;
+            ySpeed *= throttle;
+            turningSpeed *= throttle;
             // If Using Xbox Controller with no throttle use limiting constants from Constants
             //xSpeed = xSpeed * DriveTrainConstants.kTeleDriveThrottle;
             //ySpeed = ySpeed * DriveTrainConstants.kTeleDriveThrottle;
             //turningSpeed = turningSpeed * DriveTrainConstants.kTeleDriveThrottle;
 
-
         // Step 2a) - Convert Joystick values to Field Velocity (Meters/Sec)
-        xSpeed = xSpeed * DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;
-        ySpeed = ySpeed * DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;
-        turningSpeed = turningSpeed * DriveTrainConstants.kTeleDriveMaxAngularSpeedRadiansPerSecond;
+            xSpeed *= DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;
+            ySpeed *= DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;
+            turningSpeed *= DriveTrainConstants.kTeleDriveMaxAngularSpeedRadiansPerSecond;
 
         // Step 2b) - Limit Field Velocities based upon MAX acceleration constants
-        xSpeed = xLimiter.calculate(xSpeed);
-        ySpeed = xLimiter.calculate(ySpeed);
-        turningSpeed = xLimiter.calculate(turningSpeed);
+            xSpeed = xLimiter.calculate(xSpeed);
+            ySpeed = xLimiter.calculate(ySpeed);
+            turningSpeed = xLimiter.calculate(turningSpeed);
 
         // Step 3 - Create a "Chassis Speeds" Object from field velocity targets and current Gyro Angle
         ChassisSpeeds chassisSpeeds;
-        if(  m_joystick.getRawButton(OIConstants.kDriverFieldOrientedButtonIdx)){
+        if(  m_joystick.getRawButton(OIConstants.kDriverChassisOrientedButtonIdx)){
+            // Chassis Relative
+            chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, turningSpeed);
+        } else {
             // Field Relative
             chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                     xSpeed, ySpeed, turningSpeed, m_drivetrainSubSys.getGyroHeadingRotation2d());
-        } else {
-            // Chassis Relative
-            chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, turningSpeed);
         }
 
         // Step 4 - Create a "Swerve Module States" object from the "chassis Speeds" object
