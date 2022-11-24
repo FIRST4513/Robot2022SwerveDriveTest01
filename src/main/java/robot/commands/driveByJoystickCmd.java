@@ -28,6 +28,8 @@ public class driveByJoystickCmd extends CommandBase {
     private final drivetrainSubSys m_drivetrainSubSys;
     private Joystick m_joystick;
 
+    private ChassisSpeeds chassisSpeeds;
+
     private SlewRateLimiter xLimiter;
     private SlewRateLimiter yLimiter;
     private SlewRateLimiter turningLimiter;
@@ -36,9 +38,10 @@ public class driveByJoystickCmd extends CommandBase {
     public driveByJoystickCmd(drivetrainSubSys subsystem ) {
         m_drivetrainSubSys = subsystem;
         addRequirements(m_drivetrainSubSys);
-        this.xLimiter = new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAccelerationUnitsPerSecond);
-        this.yLimiter = new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAccelerationUnitsPerSecond);
-        this.turningLimiter = new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAngularAccelerationUnitsPerSecond);
+        this.xLimiter = new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAccelerationMetersPerSecond);
+        this.yLimiter = new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAccelerationMetersPerSecond);
+        this.turningLimiter = 
+                new SlewRateLimiter(DriveTrainConstants.kTeleDriveMaxAngularAccelerationRadiansPerSecond);
     }
 
     // Called when the command is initially scheduled.
@@ -83,29 +86,33 @@ public class driveByJoystickCmd extends CommandBase {
             turningSpeed = xLimiter.calculate(turningSpeed);
 
         // Step 3 - Create a "Chassis Speeds" Object from field velocity targets and current Gyro Angle
-        ChassisSpeeds chassisSpeeds;
         if(  m_joystick.getRawButton(OIConstants.kDriverChassisOrientedButtonIdx)){
             // Chassis Relative
             chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, turningSpeed);
+            m_drivetrainSubSys.storeRobotChassisSpeed(chassisSpeeds); // Send Speed data to drivetrain
         } else {
             // Field Relative
             chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                     xSpeed, ySpeed, turningSpeed, m_drivetrainSubSys.getGyroHeadingRotation2d());
+            m_drivetrainSubSys.storeRobotChassisSpeed(chassisSpeeds); // Send Speed data to drivetrain
         }
 
         // Step 4 - Create a "Swerve Module States" object from the "chassis Speeds" object
         // This creates a SwerveModuleState Array of Swerve Drive States.
         // Each array element contains "Drive-Velocity" and "Turn-Angle" values. 
-        SwerveModuleState[] moduleStates = DriveTrainConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
+        SwerveModuleState[] moduleStates = 
+                DriveTrainConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
 
         // Step 5 - Send "Swerve Module States" to Drivetrain Motors
-        m_drivetrainSubSys.setModuleStates(moduleStates);
+        m_drivetrainSubSys.setSwerveModulesStates(moduleStates);
     }
 
     // Called once the command ends or is interrupted.
     @Override
     public void end(boolean interrupted) {
-        m_drivetrainSubSys.stopModules();
+        m_drivetrainSubSys.stopSwerveMotors();
+        chassisSpeeds = new ChassisSpeeds(0.0, 0.0, 0.0);
+        m_drivetrainSubSys.storeRobotChassisSpeed(chassisSpeeds); // Send Speed data to drivetrain
     }
 
     // Returns true when the command should end.
@@ -120,9 +127,9 @@ public class driveByJoystickCmd extends CommandBase {
             return 0;
         }
         if (value > 0) {
-            value=(value - OIConstants.kDeadband) * (1 + OIConstants.kDeadband);		// Scale Yvalue smoothly to + 1
+            value=(value - OIConstants.kDeadband) * (1 + OIConstants.kDeadband); // Scale Yvalue smoothly to + 1
         } else {
-            value = - (-value - OIConstants.kDeadband) * (1 + OIConstants.kDeadband);	// Scale Yvalue smoothly to -1
+            value = - (-value - OIConstants.kDeadband) * (1 + OIConstants.kDeadband); // Scale Yvalue smoothly to -1
         }
         return value;
     }

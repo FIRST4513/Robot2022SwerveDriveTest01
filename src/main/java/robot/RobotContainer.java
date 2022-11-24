@@ -182,14 +182,14 @@ public Joystick getdriverJoy() {
             xController,
             yController,
             thetaController,
-            m_drivetrainSubSys::setModuleStates,
+            m_drivetrainSubSys::setSwerveModulesStates,
             m_drivetrainSubSys);
 
     // Step 5. Add some init and wrap-up, and return everything
     return new SequentialCommandGroup(
             new InstantCommand(() -> m_drivetrainSubSys.resetOdometry(trajectory.getInitialPose())),
             swerveControllerCommand,
-            new InstantCommand(() -> m_drivetrainSubSys.stopModules()));
+            new InstantCommand(() -> m_drivetrainSubSys.stopSwerveMotors()));
   }
 
 }

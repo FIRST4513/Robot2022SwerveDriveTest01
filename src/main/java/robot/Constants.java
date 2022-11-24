@@ -153,8 +153,8 @@ public final class Constants {
                 kPhysicalMaxSpeedMetersPerSecond * kTeleDriveThrottle;
         public static final double kTeleDriveMaxAngularSpeedRadiansPerSecond = 
                 kPhysicalMaxAngularSpeedRadiansPerSecond * kTeleDriveThrottle;
-        public static final double kTeleDriveMaxAccelerationUnitsPerSecond = 3;
-        public static final double kTeleDriveMaxAngularAccelerationUnitsPerSecond = 3;
+        public static final double kTeleDriveMaxAccelerationMetersPerSecond = 3;
+        public static final double kTeleDriveMaxAngularAccelerationRadiansPerSecond = 3;
     }
 
     // ***************************** Autonomous Constants **********************************

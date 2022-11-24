@@ -19,7 +19,7 @@ import robot.Constants.DriveTrainConstants;
 
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.SPI;
-
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -80,6 +80,10 @@ public class drivetrainSubSys extends SubsystemBase {
         DriveTrainConstants.kBackRightDriveAbsoluteEncoderOffsetRad,
         DriveTrainConstants.kBackRightDriveAbsoluteEncoderReversed);
 
+    private ChassisSpeeds chassisSpeeds;        // Used to track and report to shuffleboard current State
+
+    private int displayCtr = 0;
+
     // Gyro
     private final AHRS gyro = new AHRS(SPI.Port.kMXP);
 
@@ -95,7 +99,7 @@ public class drivetrainSubSys extends SubsystemBase {
         new Thread(() -> {
             try {
                 Thread.sleep(1000);
-                zeroHeading();
+                resetGyro();
             } catch (Exception e) {
             }
         }).start();
@@ -103,46 +107,48 @@ public class drivetrainSubSys extends SubsystemBase {
 
     @Override
     public void periodic() {
-        odometer.update(getGyroHeadingRotation2d(), frontLeft.getState(), frontRight.getState(), backLeft.getState(),
-                backRight.getState());
-        // Update Smartdash
-        SmartDashboard.putNumber("Robot Heading Degrees", getHeadingDegrees());
-        SmartDashboard.putNumber("Robot Raw Gyro Heading", gyro.getAngle());
-        SmartDashboard.putString("Robot Loc Meters", getPoseMeters().getTranslation().toString());
-        SmartDashboard.putNumber("Robot Loc X Ft", Units.metersToFeet(getPoseMeters().getX()));
-        SmartDashboard.putNumber("Robot Loc Y Ft", Units.metersToFeet(getPoseMeters().getY()));
-        SmartDashboard.putString("Robot Kinematics", DriveTrainConstants.kDriveKinematics.toString());
+        odometer.update(getGyroHeadingRotation2d(), 
+                        frontLeft.getMotorsState(),
+                        frontRight.getMotorsState(),
+                        backLeft.getMotorsState(),
+                        backRight.getMotorsState());
+        if ( displayCtr % 10 == 0) updateShuffleBoard();      // Update shuufleBoard diplay every 200 ms
+        displayCtr++;
     }
     
     @Override
     public void simulationPeriodic() {
         // This method will be called once per scheduler run when in simulation
-
     }
 
     // Put methods for controlling this subsystem
     // here. Call these from Commands.
 
-    public void zeroHeading() {
-        gyro.reset();
+    // ---------------------------------- Gyro Methods ----------------------------------
+    public double getGyroHeadingDegrees() {
+        // Returns total ACCUMULATED Z axis Angle ie) -xxxxxx degree to +xxxxxx degrees
+        // Not limited to +-360, rolls over as turns continue
+        return gyro.getAngle();
+    
+        //return Math.IEEEremainder(gyro.getAngle();, 360);  // Recalculates to -180 to +180 YAW degrees
     }
 
-    public double getHeadingDegrees() {
-        // This will return values from -180 to +180 degrees of yaw
-        return Math.IEEEremainder(gyro.getAngle(), 360);
+    public double getGyroYaw(){
+        // returns Angle -180 to + 180 degrees
+        return gyro.getYaw();
     }
 
     public Rotation2d getGyroHeadingRotation2d() {
-        // this will return a Rotation2d object of the yaw value -180 to +180 degree
-        return Rotation2d.fromDegrees(getHeadingDegrees());
+        // Return a Rotation2d object of the yaw value -180 to +180 degree
+        return Rotation2d.fromDegrees(getGyroYaw());
     }
 
+    public void resetGyro() {
+        gyro.reset();
+    }
+
+    // -------------------------------- Odometry Methods --------------------------------
     public Pose2d getPoseMeters() {
-        return odometer.getPoseMeters();
-    }
-
-    
-    public Pose2d getPoseFeet() {
         return odometer.getPoseMeters();
     }
 
@@ -150,26 +156,54 @@ public class drivetrainSubSys extends SubsystemBase {
         odometer.resetPosition(pose, getGyroHeadingRotation2d());
     }
 
-
-    public void stopModules() {
-        // Should this be done through setModuleStates method ?????
-        frontLeft.stop();
-        frontRight.stop();
-        backLeft.stop();
-        backRight.stop();
+    public void storeRobotChassisSpeed( ChassisSpeeds speeds){
+        // This is only used to show in shuffleBoard
+        chassisSpeeds = speeds; 
     }
 
-    public void setModuleStates(SwerveModuleState[] desiredStates) {
+    // ---------------------- Drive the Swerve Module Motors --------------------------
+    public void setSwerveModulesStates(SwerveModuleState[] desiredStates) {
         // Make sure all wheels are at the same Velocity (in the "desiredStates" Array)
         SwerveDriveKinematics.desaturateWheelSpeeds(
-            desiredStates, 
-            DriveTrainConstants.kPhysicalMaxSpeedMetersPerSecond);
+                desiredStates, 
+                DriveTrainConstants.kPhysicalMaxSpeedMetersPerSecond);
         // Send State (Velocity and Angle) to Each Swerve Drive Motor
-        frontLeft.setDesiredState(desiredStates[0]);
-        frontRight.setDesiredState(desiredStates[1]);
-        backLeft.setDesiredState(desiredStates[2]);
-        backRight.setDesiredState(desiredStates[3]);
+        frontLeft.setMotorsState(desiredStates[0]);
+        frontRight.setMotorsState(desiredStates[1]);
+        backLeft.setMotorsState(desiredStates[2]);
+        backRight.setMotorsState(desiredStates[3]);
     }
+
+    public void stopSwerveMotors() {
+        // Should this be done through setModuleStates method ?????
+        frontLeft.stopMotors();
+        frontRight.stopMotors();
+        backLeft.stopMotors();
+        backRight.stopMotors();
+    }
+
+    // --------------------------- Update ShuffleBoard -------------------------------
+    private void updateShuffleBoard(){
+        SmartDashboard.putNumber("Robot Gyro Hdg Degrees",  getGyroHeadingDegrees());
+        SmartDashboard.putNumber("Robot Gyro Angle",        gyro.getAngle());
+        SmartDashboard.putNumber("Robot Gyro Yaw",          gyro.getYaw());
+        SmartDashboard.putString("Robot Loc Meters",        getPoseMeters().getTranslation().toString());
+        SmartDashboard.putNumber("Robot Loc X Ft",          Units.metersToFeet(getPoseMeters().getX()));
+        SmartDashboard.putNumber("Robot Loc Y Ft",          Units.metersToFeet(getPoseMeters().getY()));
+        SmartDashboard.putString("Robot Kinematics",        DriveTrainConstants.kDriveKinematics.toString());
+
+        SmartDashboard.putNumber("Robot Fwd Vel Meters/Sec",  chassisSpeeds.vxMetersPerSecond);
+        SmartDashboard.putNumber("Robot Fwd Vel Ft/Sec",      Units.metersToFeet(chassisSpeeds.vxMetersPerSecond));
+        SmartDashboard.putNumber("Robot Side Vel Meters/Sec", chassisSpeeds.vyMetersPerSecond);
+        SmartDashboard.putNumber("Robot Side Vel Ft/Sec",     Units.metersToFeet(chassisSpeeds.vyMetersPerSecond));
+        SmartDashboard.putNumber("Robot Rot Vel Degrees/Sec", Units.radiansToDegrees(chassisSpeeds.omegaRadiansPerSecond));
+
+        frontLeft.updateShuffleboard();
+        frontRight.updateShuffleboard();
+        backLeft.updateShuffleboard();
+        backRight.updateShuffleboard();
+    }
+
 }
 
 

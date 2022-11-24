@@ -138,37 +138,46 @@ public class SwerveModule {
         return absoluteEncoder.getPosition();
     }    
 
-    // -------------- Swerve Module STATE Methods -----------
+    // -------------- Drive Swerve Module Motors -----------
+    public void setMotorsState(SwerveModuleState state) {
+        // State (Wheel Velocity in Meters/Sec and Wheel Angle in Radians).
 
-    public SwerveModuleState getState() {
+        if (Math.abs(state.speedMetersPerSecond) < 0.001) {
+            // Speed is too low just stop the motors.
+            stopMotors(); 
+            return;
+        }
+        // Optimized for shortest turn route
+        state = SwerveModuleState.optimize(state, getMotorsState().angle);
+
+        // Power the Drive Motor (This converts a command in meters/sec into -1.0 to +1.0)
+        driveMotor.set(state.speedMetersPerSecond / DriveTrainConstants.kPhysicalMaxSpeedMetersPerSecond);
+
+        // Power the Turning Motor - (This uses a PID controller to lock in on Angle (Current Angle , Setpoint))
+        turningMotor.set(turningPidController.calculate(getWheelAngleRadians(), state.angle.getRadians()));
+    }
+
+    public void stopMotors() {
+        driveMotor.set(0);
+        turningMotor.set(0);
+    }
+
+    public SwerveModuleState getMotorsState() {
         return new SwerveModuleState(getDriveVelMeters(), new Rotation2d(getWheelAngleRadians()));
     }
 
-    public void setDesiredState(SwerveModuleState state) {
-        // Passed state provides - Wheel Velocity in Meters/Sec and Wheel Angle in Radians.
-        if (Math.abs(state.speedMetersPerSecond) < 0.001) {
-            // If the requested speed is too low just stop the motors and get out.
-            stop(); 
-            return;
-        }
-        // Compare the current Wheel Angle to Target and determine shortest route
-        state = SwerveModuleState.optimize(state, getState().angle);
-        // Power the Drive Motor (This converts a command in meters/sec into -1.0 to +1.0)
-        driveMotor.set(state.speedMetersPerSecond / DriveTrainConstants.kPhysicalMaxSpeedMetersPerSecond);
-        // Power the Turning Motor - This uses a PID controller to lock in on Angle (Current Angle , Setpoint)
-        turningMotor.set(turningPidController.calculate(getWheelAngleRadians(), state.angle.getRadians()));
-        // Update smart dashboard
-        SmartDashboard.putString( swerveModuleID + " State", state.toString());
-        SmartDashboard.putNumber( swerveModuleID + " State Angle Degrees", state.angle.getDegrees());
-        SmartDashboard.putNumber( swerveModuleID + " State Speed Meters", state.speedMetersPerSecond);
-        SmartDashboard.putNumber( swerveModuleID + " Dist Meters", getDriveDistMeters());
-        SmartDashboard.putNumber( swerveModuleID + " Dist Inches", getDriveDistInches());
-        SmartDashboard.putNumber( swerveModuleID + " Vel Meters/Sec", getDriveVelMeters());
-        SmartDashboard.putNumber( swerveModuleID + " Vel Ft/Sec", getDriveVelInches()/12.0);
-    }
+    public void updateShuffleboard(){
+        SmartDashboard.putString( swerveModuleID + " State", getMotorsState().toString());
+        SmartDashboard.putNumber( swerveModuleID + " State Angle Degrees", getMotorsState().angle.getDegrees());
+        SmartDashboard.putNumber( swerveModuleID + " State Speed Meters", getMotorsState().speedMetersPerSecond);
 
-    public void stop() {
-        driveMotor.set(0);
-        turningMotor.set(0);
+        SmartDashboard.putNumber( swerveModuleID + " Wheel Angle Raw",      getWheelAngleRaw());
+        SmartDashboard.putNumber( swerveModuleID + " Wheel Angle Degrees",  getWheelAngleDegrees());
+        SmartDashboard.putNumber( swerveModuleID + " Drive Dist Raw",       getDriveEncoderRaw());
+        SmartDashboard.putNumber( swerveModuleID + " Drive Dist Inches",    getDriveDistInches());
+        SmartDashboard.putNumber( swerveModuleID + " Drive Dist Meters",    getDriveDistMeters());
+        SmartDashboard.putNumber( swerveModuleID + " Drive Vel Ft/Sec",     getDriveVelInches()/12.0);
+        SmartDashboard.putNumber( swerveModuleID + " Drive Vel Meters/Sec", getDriveVelMeters());
+
     }
 }
