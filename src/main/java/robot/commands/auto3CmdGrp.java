@@ -78,7 +78,7 @@ public class auto3CmdGrp extends SequentialCommandGroup {
             drivetrainSubSys::setSwerveModulesStates,
             drivetrainSubSys);
 
-    // Step 5. Add some init and wrap-up, and return everything
+    // Step 5. Add some init and wrap-up, and return everything to run
     return new SequentialCommandGroup(
                 new InstantCommand(() -> drivetrainSubSys.resetOdometry(trajectory.getInitialPose())),
                 swerveControllerCommand,
