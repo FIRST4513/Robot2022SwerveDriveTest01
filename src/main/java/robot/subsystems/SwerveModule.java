@@ -104,15 +104,18 @@ public class SwerveModule {
     }
 
 
-    // --------- Absolute Encoder Methods -----------
+    // --------------------- Absolute Encoder Methods ----------------------
+    // Wheel angles need to reported + for CCW and - for CW Rotation
     public double getTurningVelRadians() {
         double rotVel = turningMotor.getSelectedSensorVelocity();    // This is the counts for the last 100ms
+        rotVel = rotVel * (absoluteEncoderReversed ? -1.0 : 1.0);    // Change sign as needed
         // This is the velocity in Radians Per Second
         return ((rotVel * 10.0) * SwerveModuleConstants.kTurningEncoderRadiansPerEncoderCount); 
     }
 
     public double getTurningVelDegrees() {
         double rotVel = turningMotor.getSelectedSensorVelocity();    // This is the counts for the last 100ms
+        rotVel = rotVel * (absoluteEncoderReversed ? -1.0 : 1.0);    // Change sign as needed
         // This is the velocity in Degrees Per Second
         return ((rotVel * 10.0) * SwerveModuleConstants.kTurningEncoderDegreesPerEncoderCount); 
     }

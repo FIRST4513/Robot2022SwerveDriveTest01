@@ -54,7 +54,7 @@ public final class Constants {
                      Units.inchesToMeters(kDriveEncoderDistancePerUnitInches);    
 
         // -------------------  CANCoder Absolute Encoder Constants  ----------------------
-        // This Encoder is 12 bit (4096)
+        // This Encoder is 12 bit (4096) Angles need to be +CCW & -CW
         //
         //        360 degrees 
         //   /   4096 Divide by Absolute Encoder Counts Per WHEEL Rotation

@@ -125,6 +125,7 @@ public class drivetrainSubSys extends SubsystemBase {
     // here. Call these from Commands.
 
     // ---------------------------------- Gyro Methods ----------------------------------
+    // Gyro hedings need to be - for CW and + for CCW
     public double getGyroHeadingDegrees() {
         // Returns total ACCUMULATED Z axis Angle ie) -xxxxxx degree to +xxxxxx degrees
         // Not limited to +-360, rolls over as turns continue
