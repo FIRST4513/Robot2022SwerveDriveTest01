@@ -105,41 +105,45 @@ public class SwerveModule {
 
 
     // --------------------- Absolute Encoder Methods ----------------------
-    // Wheel angles need to reported + for CCW and - for CW Rotation
-    public double getTurningVelRadians() {
-        double rotVel = turningMotor.getSelectedSensorVelocity();    // This is the counts for the last 100ms
-        rotVel = rotVel * (absoluteEncoderReversed ? -1.0 : 1.0);    // Change sign as needed
-        // This is the velocity in Radians Per Second
-        return ((rotVel * 10.0) * SwerveModuleConstants.kTurningEncoderRadiansPerEncoderCount); 
+
+
+    // ----------  Absolute Encoder Methods -----------
+
+    public double getAbsoluteEncoderRadians() {
+        // returns 0 to 2PI radians
+        return absoluteEncoder.getAbsolutePosition();
     }
 
-    public double getTurningVelDegrees() {
-        double rotVel = turningMotor.getSelectedSensorVelocity();    // This is the counts for the last 100ms
-        rotVel = rotVel * (absoluteEncoderReversed ? -1.0 : 1.0);    // Change sign as needed
-        // This is the velocity in Degrees Per Second
-        return ((rotVel * 10.0) * SwerveModuleConstants.kTurningEncoderDegreesPerEncoderCount); 
+    public double getAbsoluteEncoderDegrees() {
+        // returns 0 to 360 Degrees
+        return Math.toDegrees(getAbsoluteEncoderRadians());
     }
-
-    public double getWheelAngleRadians() {
-        double angle = absoluteEncoder.getPosition();            // Position in Radians
-        angle -= absoluteEncoderOffsetRad;                       // Correct for Sensor Misaligned
-        angle = angle * (absoluteEncoderReversed ? -1.0 : 1.0);  // Change sign as needed
+    
+    public double getWHeelCurrentAngleRadians(){
+        // Returns offset adjusted angle
+        // Also  changes scale from 0 to 2PI to (0 to + PI) for CCW  or (0 to - PI) for CW rotation
+        double angle = getAbsoluteEncoderRadians() - absoluteEncoderOffsetRad;;
+        if ( absoluteEncoderOffsetRad <= Math.PI){
+            // Offset <= PI (180 degrees)
+            if ( angle > Math.PI ){
+                return (angle - (2 * Math.PI));
+            }
+        } else {
+            // Offset > PI (180 degrees)
+            if ( angle < -Math.PI ){
+                return (angle + (2 * Math.PI));
+            }
+        }
         return angle;
     }
 
-    public double getWheelAngleDegrees() {
-        // Degrees 0 to +-180 Degrees
-        double angle = absoluteEncoder.getPosition();            // Position in Radians
-        angle -= absoluteEncoderOffsetRad;                       // Correct for Sensor Misaligned
-        angle = angle * (absoluteEncoderReversed ? -1.0 : 1.0);  // Change sign as needed
-        angle = Math.toDegrees(angle);                           // Change to Degrees 
-        return angle;
+    public double getWHeelCurrentAngleDegrees(){
+        // Returns offset adjusted angle
+        // Also changes scale from 0-360 to (0 to +180) for CCW or (0 to -180) for CW rotation
+        double angle = getWHeelCurrentAngleRadians();
+        return Math.toDegrees(angle);
     }
 
-    public double getWheelAngleRaw(){
-        // Position in Radians
-        return absoluteEncoder.getPosition();
-    }    
 
     // -------------- Drive Swerve Module Motors -----------
     public void setMotorsState(SwerveModuleState state) {
@@ -157,7 +161,7 @@ public class SwerveModule {
         driveMotor.set(state.speedMetersPerSecond / DriveTrainConstants.kPhysicalMaxSpeedMetersPerSecond);
 
         // Power the Turning Motor - (This uses a PID controller to lock in on Angle (Current Angle , Setpoint))
-        turningMotor.set(turningPidController.calculate(getWheelAngleRadians(), state.angle.getRadians()));
+        turningMotor.set(turningPidController.calculate(getWHeelCurrentAngleRadians(), state.angle.getRadians()));
     }
 
     public void stopMotors() {
@@ -166,7 +170,7 @@ public class SwerveModule {
     }
 
     public SwerveModuleState getMotorsState() {
-        return new SwerveModuleState(getDriveVelMeters(), new Rotation2d(getWheelAngleRadians()));
+        return new SwerveModuleState(getDriveVelMeters(), new Rotation2d(getWHeelCurrentAngleRadians()));
     }
 
     public void updateShuffleboard(){
@@ -174,8 +178,8 @@ public class SwerveModule {
         SmartDashboard.putNumber( swerveModuleID + " State Angle Degrees", getMotorsState().angle.getDegrees());
         SmartDashboard.putNumber( swerveModuleID + " State Speed Meters", getMotorsState().speedMetersPerSecond);
 
-        SmartDashboard.putNumber( swerveModuleID + " Wheel Angle Raw",      getWheelAngleRaw());
-        SmartDashboard.putNumber( swerveModuleID + " Wheel Angle Degrees",  getWheelAngleDegrees());
+        SmartDashboard.putNumber( swerveModuleID + " Wheel Angle Raw",      getAbsoluteEncoderRadians());
+        SmartDashboard.putNumber( swerveModuleID + " Wheel Angle Degrees",  getWHeelCurrentAngleDegrees());
         SmartDashboard.putNumber( swerveModuleID + " Drive Dist Raw",       getDriveEncoderRaw());
         SmartDashboard.putNumber( swerveModuleID + " Drive Dist Inches",    getDriveDistInches());
         SmartDashboard.putNumber( swerveModuleID + " Drive Dist Meters",    getDriveDistMeters());

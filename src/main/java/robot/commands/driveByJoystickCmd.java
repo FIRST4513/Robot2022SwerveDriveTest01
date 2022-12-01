@@ -16,6 +16,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import robot.Constants.DriveTrainConstants;
 import robot.Constants.OIConstants;
@@ -56,55 +57,57 @@ public class driveByJoystickCmd extends CommandBase {
 
         // Step 1 - Get joystick Inputs
         // Step 1a) Get joystick inputs from individual axis
-            double xSpeed = m_joystick.getY();      // NOTE: "Y" axis to get "X" (Fwd/Back) Speed
-            double ySpeed = m_joystick.getX();      // NOTE: "X" axis to get "Y" (Left/RT)  Speed
+            double xSpeed = -m_joystick.getY();
+            double ySpeed = m_joystick.getX();
             double turningSpeed = m_joystick.getTwist();
             double throttle = (-m_joystick.getThrottle()/2) + 0.5; // convert from ( -1:1 ) to ( 0:1 ) 
+            //SmartDashboard.putNumber("Joy Drive ySpeed Raw 1", ySpeed);
+            //SmartDashboard.putNumber("Joy Drive xSpeed Raw 1", xSpeed);
 
         // Step 1b) Apply deadband (in case joystick doesn't return fully to Zero position)
-            xSpeed = deadBand(xSpeed);
+            xSpeed = deadBand(xSpeed);  // Not Used in this program
             ySpeed = deadBand(ySpeed);
             turningSpeed = deadBand(turningSpeed);
+            //SmartDashboard.putNumber("Joy Drive ySpeed Raw 2", ySpeed);
 
         // Step 1c) Limit Speeds based on throttle setting
-            xSpeed *= throttle;
+            xSpeed *= throttle;  // Not Used in this program
             ySpeed *= throttle;
-            turningSpeed *= throttle;
-            // If Using Xbox Controller with no throttle use limiting constants from Constants
-            //xSpeed = xSpeed * DriveTrainConstants.kTeleDriveThrottle;
-            //ySpeed = ySpeed * DriveTrainConstants.kTeleDriveThrottle;
-            //turningSpeed = turningSpeed * DriveTrainConstants.kTeleDriveThrottle;
+            turningSpeed *= throttle; //
+            //SmartDashboard.putNumber("Joy Drive ySpeed Raw 3", ySpeed);
 
-        // Step 2a) - Convert Joystick values to Field Velocity (Meters/Sec)
-            xSpeed *= DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;
+        // Step 2a - Convert Joystick values to Field Velocity (Meters/Sec)
+            xSpeed *= DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;  // Not Used in this program
             ySpeed *= DriveTrainConstants.kTeleDriveMaxSpeedMetersPerSecond;
             turningSpeed *= DriveTrainConstants.kTeleDriveMaxAngularSpeedRadiansPerSecond;
+            SmartDashboard.putNumber("Joy Turning Speed Meters", turningSpeed);
 
         // Step 2b) - Limit Field Velocities based upon MAX acceleration constants
-            xSpeed = xLimiter.calculate(xSpeed);
-            ySpeed = xLimiter.calculate(ySpeed);
-            turningSpeed = xLimiter.calculate(turningSpeed);
-
+            //xSpeed = xLimiter.calculate(xSpeed);
+            //ySpeed = xLimiter.calculate(ySpeed);
+            //turningSpeed = xLimiter.calculate(turningSpeed);
+            
         // Step 3 - Create a "Chassis Speeds" Object from field velocity targets and current Gyro Angle
-        if(  m_joystick.getRawButton(OIConstants.kDriverChassisOrientedButtonIdx)){
-            // Chassis Relative
-            chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, turningSpeed);
-            m_drivetrainSubSys.storeRobotChassisSpeed(chassisSpeeds); // Send Speed data to drivetrain
-        } else {
-            // Field Relative
-            chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                    xSpeed, ySpeed, turningSpeed, m_drivetrainSubSys.getGyroHeadingRotation2d());
-            m_drivetrainSubSys.storeRobotChassisSpeed(chassisSpeeds); // Send Speed data to drivetrain
-        }
+            if( m_joystick.getRawButton(OIConstants.kDriverChassisOrientedButtonIdx) ){
+                // Chassis Relative
+                chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, turningSpeed);
+            } else {
+                // Field Relative
+                chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+                        xSpeed, ySpeed, turningSpeed, m_drivetrainSubSys.getGyroHeadingRotation2d());
+            }
+
+        // Send Speed data to drivetrain for display on shuffleboard
+        m_drivetrainSubSys.storeRobotChassisSpeed(chassisSpeeds); 
 
         // Step 4 - Create a "Swerve Module States" object from the "chassis Speeds" object
-        // This creates a SwerveModuleState Array of Swerve Drive States.
-        // Each array element contains "Drive-Velocity" and "Turn-Angle" values. 
-        SwerveModuleState[] moduleStates = 
-                DriveTrainConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
+            // This creates a SwerveModuleState Array of Swerve Drive States.
+            // Each array element contains "Drive-Velocity" and "Turn-Angle" values. 
+            SwerveModuleState[] moduleStates = 
+                    DriveTrainConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
 
         // Step 5 - Send "Swerve Module States" to Drivetrain Motors
-        m_drivetrainSubSys.setSwerveModulesStates(moduleStates);
+            m_drivetrainSubSys.setSwerveModulesStates(moduleStates);
     }
 
     // Called once the command ends or is interrupted.

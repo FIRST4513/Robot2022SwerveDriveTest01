@@ -146,6 +146,8 @@ public class drivetrainSubSys extends SubsystemBase {
 
     public Rotation2d getGyroHeadingRotation2d() {
         // Return a Rotation2d object of the yaw value -180 to +180 degree
+        // I beleive the Rotation2d is stored as Radians !
+        // Degrees -180 to +180 is then internaly converted to ( -PI to +PI )
         return Rotation2d.fromDegrees(getGyroYaw());
     }
 
